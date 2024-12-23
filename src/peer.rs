@@ -144,24 +144,44 @@ impl Peer {
     self.create_peer().await
   }
 
-  pub async fn on_signal(&self, callback: OnSignal) {
-    self.inner.on_signal.lock().await.replace(callback);
+  pub fn on_signal(&self, callback: OnSignal) {
+    block_in_place(|| {
+      Handle::current()
+        .block_on(self.inner.on_signal.lock())
+        .replace(callback)
+    });
   }
 
-  pub async fn on_data(&self, callback: OnData) {
-    self.inner.on_data.lock().await.replace(callback);
+  pub fn on_data(&self, callback: OnData) {
+    block_in_place(|| {
+      Handle::current()
+        .block_on(self.inner.on_data.lock())
+        .replace(callback)
+    });
   }
 
-  pub async fn on_connect(&self, callback: OnConnect) {
-    self.inner.on_connect.lock().await.replace(callback);
+  pub fn on_connect(&self, callback: OnConnect) {
+    block_in_place(|| {
+      Handle::current()
+        .block_on(self.inner.on_connect.lock())
+        .replace(callback)
+    });
   }
 
-  pub async fn on_close(&self, callback: OnClose) {
-    self.inner.on_close.lock().await.replace(callback);
+  pub fn on_close(&self, callback: OnClose) {
+    block_in_place(|| {
+      Handle::current()
+        .block_on(self.inner.on_close.lock())
+        .replace(callback)
+    });
   }
 
-  pub async fn on_negotiated(&self, callback: OnNegotiated) {
-    self.inner.on_negotiated.lock().await.replace(callback);
+  pub fn on_negotiated(&self, callback: OnNegotiated) {
+    block_in_place(|| {
+      Handle::current()
+        .block_on(self.inner.on_negotiated.lock())
+        .replace(callback)
+    });
   }
 
   async fn create_peer(&self) -> Result<(), webrtc::Error> {
@@ -449,7 +469,7 @@ mod test {
 
   use super::*;
 
-  #[tokio::test]
+  #[tokio::test(flavor = "multi_thread")]
   async fn basic() -> Result<(), webrtc::Error> {
     let mut m = MediaEngine::default();
     let registry = register_default_interceptors(Registry::new(), &mut m)?;
@@ -487,56 +507,48 @@ mod test {
     );
 
     let on_signal_peer2 = peer2.clone();
-    peer1
-      .on_signal(Box::new(move |singal| {
-        let pinned_peer2 = on_signal_peer2.clone();
-        Box::pin(async move {
-          pinned_peer2
-            .signal(singal)
-            .await
-            .expect("failed to signal peer2");
-        })
-      }))
-      .await;
+    peer1.on_signal(Box::new(move |singal| {
+      let pinned_peer2 = on_signal_peer2.clone();
+      Box::pin(async move {
+        pinned_peer2
+          .signal(singal)
+          .await
+          .expect("failed to signal peer2");
+      })
+    }));
 
     let on_signal_peer1 = peer1.clone();
-    peer2
-      .on_signal(Box::new(move |singal| {
-        let pinned_peer1 = on_signal_peer1.clone();
-        Box::pin(async move {
-          pinned_peer1
-            .signal(singal)
-            .await
-            .expect("failed to signal peer1");
-        })
-      }))
-      .await;
+    peer2.on_signal(Box::new(move |singal| {
+      let pinned_peer1 = on_signal_peer1.clone();
+      Box::pin(async move {
+        pinned_peer1
+          .signal(singal)
+          .await
+          .expect("failed to signal peer1");
+      })
+    }));
 
     let (connect_sender, mut connect_receiver) = tokio::sync::mpsc::channel::<()>(1);
-    peer2
-      .on_connect(Box::new(move || {
-        let pinned_connect_sender = connect_sender.clone();
-        Box::pin(async move {
-          pinned_connect_sender
-            .send(())
-            .await
-            .expect("failed to send connect");
-        })
-      }))
-      .await;
+    peer2.on_connect(Box::new(move || {
+      let pinned_connect_sender = connect_sender.clone();
+      Box::pin(async move {
+        pinned_connect_sender
+          .send(())
+          .await
+          .expect("failed to send connect");
+      })
+    }));
 
     let (message_sender, mut message_receiver) = tokio::sync::mpsc::channel::<Vec<u8>>(1);
-    peer1
-      .on_data(Box::new(move |data| {
-        let pinned_message_sender = message_sender.clone();
-        Box::pin(async move {
-          pinned_message_sender
-            .send(data)
-            .await
-            .expect("failed to send connect");
-        })
-      }))
-      .await;
+    peer1.on_data(Box::new(move |data| {
+      let pinned_message_sender = message_sender.clone();
+      Box::pin(async move {
+        pinned_message_sender
+          .send(data)
+          .await
+          .expect("failed to send connect");
+      })
+    }));
 
     peer1.init().await?;
 
