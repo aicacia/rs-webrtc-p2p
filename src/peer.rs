@@ -48,13 +48,13 @@ pub enum SignalMessage {
   Renegotiate,
   #[serde(rename = "candidate")]
   Candidate(RTCIceCandidateInit),
-  #[serde(rename = "answer")]
+  #[serde(untagged)]
   Answer(RTCSessionDescription),
-  #[serde(rename = "offer")]
+  #[serde(untagged)]
   Offer(RTCSessionDescription),
-  #[serde(rename = "pranswer")]
+  #[serde(untagged)]
   Pranswer(RTCSessionDescription),
-  #[serde(rename = "rollback")]
+  #[serde(untagged)]
   Rollback(RTCSessionDescription),
 }
 
