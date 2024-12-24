@@ -47,15 +47,9 @@ pub enum SignalMessage {
   #[serde(rename = "renegotiate")]
   Renegotiate,
   #[serde(rename = "candidate")]
-  Candidate(RTCIceCandidateInit),
+  Candidate { candidate: RTCIceCandidateInit },
   #[serde(untagged)]
-  Answer(RTCSessionDescription),
-  #[serde(untagged)]
-  Offer(RTCSessionDescription),
-  #[serde(untagged)]
-  Pranswer(RTCSessionDescription),
-  #[serde(untagged)]
-  Rollback(RTCSessionDescription),
+  SDP(RTCSessionDescription),
 }
 
 pub type OnSignal = Box<
@@ -285,7 +279,7 @@ impl Peer {
         }
       };
       self
-        .internal_on_signal(SignalMessage::Candidate(candidate))
+        .internal_on_signal(SignalMessage::Candidate { candidate })
         .await;
     }
   }
@@ -364,7 +358,7 @@ impl Peer {
 
     match msg {
       SignalMessage::Renegotiate => self.negotiate().await,
-      SignalMessage::Candidate(candidate) => {
+      SignalMessage::Candidate { candidate } => {
         if let Some(connection) = self.inner.connection.as_ref(Ordering::Relaxed) {
           if connection.remote_description().await.is_some() {
             return connection.add_ice_candidate(candidate).await;
@@ -373,30 +367,22 @@ impl Peer {
         self.inner.pending_candidates.lock().await.push(candidate);
         Ok(())
       }
-      SignalMessage::Answer(answer) => self.handle_session_description(answer).await,
-      SignalMessage::Offer(offer) => self.handle_session_description(offer).await,
-      SignalMessage::Pranswer(pranswer) => self.handle_session_description(pranswer).await,
-      SignalMessage::Rollback(rollback) => self.handle_session_description(rollback).await,
-    }
-  }
-
-  async fn handle_session_description(
-    &self,
-    sdp: RTCSessionDescription,
-  ) -> Result<(), webrtc::Error> {
-    if let Some(connection) = self.inner.connection.as_ref(Ordering::Relaxed) {
-      let kind = sdp.sdp_type.clone();
-      connection.set_remote_description(sdp).await?;
-      for pending_candidate in self.inner.pending_candidates.lock().await.drain(..) {
-        connection.add_ice_candidate(pending_candidate).await?;
+      SignalMessage::SDP(sdp) => {
+        if let Some(connection) = self.inner.connection.as_ref(Ordering::Relaxed) {
+          let kind = sdp.sdp_type.clone();
+          connection.set_remote_description(sdp).await?;
+          for pending_candidate in self.inner.pending_candidates.lock().await.drain(..) {
+            connection.add_ice_candidate(pending_candidate).await?;
+          }
+          if kind == RTCSdpType::Offer {
+            self.create_answer().await?;
+          }
+          self.internal_on_negotiated().await;
+          Ok(())
+        } else {
+          Err(webrtc::Error::ErrConnectionClosed)
+        }
       }
-      if kind == RTCSdpType::Offer {
-        self.create_answer().await?;
-      }
-      self.internal_on_negotiated().await;
-      Ok(())
-    } else {
-      Err(webrtc::Error::ErrConnectionClosed)
     }
   }
 
@@ -406,7 +392,7 @@ impl Peer {
         .create_offer(self.inner.offer_config.clone())
         .await?;
       connection.set_local_description(offer.clone()).await?;
-      self.internal_on_signal(SignalMessage::Offer(offer)).await;
+      self.internal_on_signal(SignalMessage::SDP(offer)).await;
     }
     Ok(())
   }
@@ -417,7 +403,7 @@ impl Peer {
         .create_answer(self.inner.answer_config.clone())
         .await?;
       connection.set_local_description(answer.clone()).await?;
-      self.internal_on_signal(SignalMessage::Answer(answer)).await;
+      self.internal_on_signal(SignalMessage::SDP(answer)).await;
     }
     Ok(())
   }
