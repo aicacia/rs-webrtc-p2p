@@ -28,7 +28,7 @@ impl<T> AtomicOption<T> {
     }
   }
 
-  pub fn get_or_store(&self, ordering: Ordering, value: T) -> &T {
+  pub fn load_or_store(&self, ordering: Ordering, value: T) -> &T {
     let new_ptr = Box::into_raw(Box::new(value));
     let prev_ptr = self.0.swap(new_ptr, ordering);
     if !prev_ptr.is_null() {
@@ -39,7 +39,7 @@ impl<T> AtomicOption<T> {
     unsafe { &*new_ptr }
   }
 
-  pub fn get_or_store_with<F>(
+  pub fn load_or_store_with<F>(
     &self,
     set_ordering: Ordering,
     get_ordering: Ordering,
@@ -75,6 +75,14 @@ impl<T> AtomicOption<T> {
       return None;
     }
     unsafe { Some(&*ptr) }
+  }
+
+  pub fn as_mut(&mut self, ordering: Ordering) -> Option<&mut T> {
+    let ptr = self.0.load(ordering);
+    if ptr.is_null() {
+      return None;
+    }
+    unsafe { Some(&mut *ptr) }
   }
 
   pub fn take(&self, ordering: Ordering) -> Option<T> {

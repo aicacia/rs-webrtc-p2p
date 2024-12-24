@@ -190,7 +190,7 @@ impl Peer {
       self
         .inner
         .connection
-        .get_or_store_with(Ordering::SeqCst, Ordering::SeqCst, || {
+        .load_or_store_with(Ordering::SeqCst, Ordering::SeqCst, || {
           block_in_place(|| {
             Handle::current()
               .block_on(api.new_peer_connection(self.inner.connection_config.clone()))
