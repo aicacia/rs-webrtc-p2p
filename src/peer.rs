@@ -27,7 +27,7 @@ use webrtc::{
   track::track_remote::TrackRemote,
 };
 
-use crate::atomic_option::AtomicOption;
+use atomicoption::AtomicOption;
 
 #[derive(Clone, Default)]
 pub struct PeerOptions {

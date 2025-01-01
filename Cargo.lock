@@ -124,6 +124,11 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1505bd5d3d116872e7271a6d4e16d81d0c8570876c8de68093a09ac269d8aac0"
 
 [[package]]
+name = "atomicoption"
+version = "0.1.0"
+source = "git+https://github.com/aicacia/rs-atomic-option.git?rev=f5cc802#f5cc8026f882f323a6a3435d4156e3ee599aa1e2"
+
+[[package]]
 name = "autocfg"
 version = "1.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1036,6 +1041,7 @@ dependencies = [
 name = "peer"
 version = "0.1.0"
 dependencies = [
+ "atomicoption",
  "serde",
  "tokio",
  "uuid",

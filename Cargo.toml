@@ -16,6 +16,7 @@ serde = { version = "1.0", default-features = false, features = ["derive"] }
 webrtc = { version = "0.12", default-features = false }
 uuid = { version = "1.11", default-features = false }
 tokio = { version = "*", default-features = false }
+atomicoption = { git = "https://github.com/aicacia/rs-atomic-option.git", rev = "f5cc802" }
 
 [profile.dev]
 opt-level = 1
