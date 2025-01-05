@@ -3,20 +3,20 @@ authors = ["nathanfaucett@gmail.com"]
 description = "simple peer to peer over webrtc"
 edition = "2021"
 license = "MIT OR Apache-2.0"
-name = "peer"
+name = "webrtc-p2p"
 repository = "https://github.com/aicacia/rs-peer"
 rust-version = "1.82"
 version = "0.1.0"
 
 [lib]
-name = "peer"
+name = "webrtc_p2p"
 
 [dependencies]
 serde = { version = "1.0", default-features = false, features = ["derive"] }
 webrtc = { version = "0.12", default-features = false }
 uuid = { version = "1.11", default-features = false }
 tokio = { version = "*", default-features = false }
-atomicoption = { git = "https://github.com/aicacia/rs-atomic-option.git", rev = "f5cc802" }
+atomicoption = "0.1"
 
 [profile.dev]
 opt-level = 1

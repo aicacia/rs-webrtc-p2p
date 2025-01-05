@@ -126,7 +126,8 @@ checksum = "1505bd5d3d116872e7271a6d4e16d81d0c8570876c8de68093a09ac269d8aac0"
 [[package]]
 name = "atomicoption"
 version = "0.1.0"
-source = "git+https://github.com/aicacia/rs-atomic-option.git?rev=f5cc802#f5cc8026f882f323a6a3435d4156e3ee599aa1e2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c5201cf250e0a879de5e309744cc5ce2f84b2f0e190c4a617561ccf638099910"
 
 [[package]]
 name = "autocfg"
@@ -1038,17 +1039,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "peer"
-version = "0.1.0"
-dependencies = [
- "atomicoption",
- "serde",
- "tokio",
- "uuid",
- "webrtc",
-]
-
-[[package]]
 name = "pem"
 version = "3.0.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1928,6 +1918,17 @@ dependencies = [
  "rand",
  "rtp",
  "thiserror",
+]
+
+[[package]]
+name = "webrtc-p2p"
+version = "0.1.0"
+dependencies = [
+ "atomicoption",
+ "serde",
+ "tokio",
+ "uuid",
+ "webrtc",
 ]
 
 [[package]]

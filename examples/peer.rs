@@ -1,6 +1,5 @@
 use std::sync::Arc;
 
-use peer::peer::{Peer, PeerOptions};
 use webrtc::{
   api::{
     interceptor_registry::register_default_interceptors, media_engine::MediaEngine, APIBuilder,
@@ -9,6 +8,7 @@ use webrtc::{
   interceptor::registry::Registry,
   peer_connection::configuration::RTCConfiguration,
 };
+use webrtc_p2p::peer::{Peer, PeerOptions};
 
 #[tokio::main]
 async fn main() -> Result<(), webrtc::Error> {
